@@ -103,7 +103,7 @@ function M.setup(options)
   vim.cmd([[
     augroup defer_diagnostics
       autocmd!
-      au InsertLeave * lua require('dotfiles.defer_diagnostics').flush()
+      au InsertLeave * lua require('dd').flush()
     augroup END
   ]])
 
