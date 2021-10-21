@@ -44,26 +44,11 @@ local config = {
   timeout = 1000
 }
 
-local function schedule(result, ctx, cfg)
-  return vim.defer_fn(
-    function() original_on_publish(nil, result, ctx, cfg) end,
-    config.timeout
-  )
-end
-
 -- The various modes that for which we don't want diagnostics to show while we
 -- are in those modes.
 local ignore_modes = { i = true, ic = true, ix = true }
 
-function M.defer(result, ctx, config)
-  local client = ctx.client_id
-  local uri = result.uri
-  local buffer = vim.uri_to_bufnr(uri)
-
-  if pending[buffer][client] then
-    pending[buffer][client]:stop()
-  end
-
+local function should_cache()
   -- In insert mode we don't want the diagnostics to show up, even if we wait a
   -- long time after we stop typing.
   --
@@ -72,7 +57,37 @@ function M.defer(result, ctx, config)
   -- diagnostics to show up just yet.
   local mode = api.nvim_get_mode().mode
 
-  if fn.pumvisible() == 1 or ignore_modes[mode] then
+  return fn.pumvisible() == 1 or ignore_modes[mode]
+end
+
+local function schedule(result, ctx, cfg)
+  return vim.defer_fn(
+    function()
+      -- It's possible that at this point the state has changed such that we
+      -- _don't_ want to show diagnostics anymore (e.g. we've entered insert
+      -- mode again).
+      --
+      -- If new diagnostics were produced, this callback would have been
+      -- cancelled by now. As such we'll just defer the diagnostics again.
+      if should_cache() then
+        M.defer(result, ctx, cfg)
+      else
+        original_on_publish(nil, result, ctx, cfg)
+      end
+    end,
+    config.timeout
+  )
+end
+
+function M.defer(result, ctx, config)
+  local client = ctx.client_id
+  local buffer = vim.uri_to_bufnr(result.uri)
+
+  if pending[buffer][client] then
+    pending[buffer][client]:stop()
+  end
+
+  if should_cache() then
     cached[buffer][client] = { result = result, ctx = ctx, config = config }
     return
   end
