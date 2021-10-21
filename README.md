@@ -25,6 +25,21 @@ nvim-dd tries to solve this problem by deferring _all_ diagnostics. This means
 no annoying diagnostics while you are typing, and no need to handle deferring
 every time you use the `vim.diagnostic` API yourself (e.g. in a statusline).
 
+To illustrate this, here's what it looks like when you edit a Lua file without
+nvim-dd:
+
+![Without nvim-dd](/uploads/e3fa3bce57171b20c655319ffbd13ada/before.webm)
+
+Note how the statusline changes as we're typing, and the new signs/underlines
+that are produced.
+
+Here's what it looks like _with_ nvim-dd:
+
+![With nvim-dd](/uploads/cdac1507febaec3dd6a85dacddbc2bdc/after.webm)
+
+While the statusline and signs/underlines still change, they change less
+frequently and not while we're in insert mode.
+
 ## How it works
 
 nvim-dd hijacks `vim.lsp.diagnostic.on_publish_diagnostics`. Every time new
