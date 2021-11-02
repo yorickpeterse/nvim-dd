@@ -52,7 +52,10 @@ mode, nvim-dd schedules all cached diagnostics using the same timer mechanism.
 The result of this setup is that you can type all you want in insert mode, and
 never be bothered by new (irrelevant) diagnostics. When leaving insert mode you
 aren't _immediately_ bombarded with new diagnostics. When editing in normal
-mode, diagnostics are only produced a certain time after your last edit.
+mode, diagnostics are only displayed a certain amount of time after they are
+received by NeoVim. In addition, if the diagnostics count is _reduced_ nvim-dd
+will display the new diagnostics immediately. This way you won't be left with
+irrelevant diagnostics after you fix them.
 
 This approach comes with one downside: if you use a plugin that expects
 diagnostics to be available _immediately_ after the language server sends them
