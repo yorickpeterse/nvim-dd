@@ -39,9 +39,6 @@ local cached = buffer_cache()
 -- automatically after a short period of time.
 local pending = buffer_cache()
 
--- The number of diagnostics per (buffer, client) pair.
-local counts = buffer_cache()
-
 local config = {
   -- The time (in milliseconds) after which diagnostics should be produced.
   timeout = 1000
@@ -63,31 +60,7 @@ local function should_cache()
   return fn.pumvisible() == 1 or ignore_modes[mode]
 end
 
-local function fewer_diagnostics(buffer, client, diagnostics)
-  local old = counts[buffer][client] or 0
-  local new = #diagnostics
-
-  counts[buffer][client] = new
-
-  return new < old
-end
-
 local function schedule(result, ctx, cfg)
-  local client = ctx.client_id
-  local buffer = vim.uri_to_bufnr(result.uri)
-
-  -- When diagnostics are added, we don't want to immediately display them, as
-  -- they may be irrelevant (e.g. syntax errors while we're editing in normal
-  -- mode).
-  --
-  -- When diagnostic counts are reduced, we _do_ want to update the diagnostics
-  -- immediately. This way you don't need to wait until the timeout before any
-  -- irrelevant diagnostics (e.g. syntax errors that are fixed) are cleared.
-  if fewer_diagnostics(buffer, client, result.diagnostics) then
-    original_on_publish(nil, result, ctx, cfg)
-    return
-  end
-
   return vim.defer_fn(
     function()
       -- It's possible that at this point the state has changed such that we
