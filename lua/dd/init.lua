@@ -18,11 +18,11 @@ local function buffer_cache()
       api.nvim_buf_attach(buffer, false, {
         on_detach = function()
           table[buffer] = nil
-        end
+        end,
       })
 
       return table[buffer]
-    end
+    end,
   }
 
   setmetatable(cache, mt)
@@ -41,7 +41,7 @@ local pending = buffer_cache()
 
 local config = {
   -- The time (in milliseconds) after which diagnostics should be produced.
-  timeout = 1000
+  timeout = 1000,
 }
 
 -- The various modes that for which we don't want diagnostics to show while we
@@ -61,22 +61,20 @@ local function should_cache()
 end
 
 local function schedule(result, ctx, cfg)
-  return vim.defer_fn(
-    function()
-      -- It's possible that at this point the state has changed such that we
-      -- _don't_ want to show diagnostics anymore (e.g. we've entered insert
-      -- mode again).
-      --
-      -- If new diagnostics were produced, this callback would have been
-      -- cancelled by now. As such we'll just defer the diagnostics again.
-      if should_cache() then
-        M.defer(result, ctx, cfg)
-      else
-        original_on_publish(nil, result, ctx, cfg)
-      end
-    end,
-    config.timeout
-  )
+  return vim.defer_fn(function()
+    -- It's possible that at this point the state has changed such that we
+    -- _don't_ want to show diagnostics anymore (e.g. we've entered insert
+    -- mode again).
+    --
+    -- If new diagnostics were produced, this callback would have been
+    -- cancelled by now. As such we'll just defer the diagnostics again.
+    if should_cache() then
+      M.defer(result, ctx, cfg)
+      return
+    end
+
+    original_on_publish(nil, result, ctx, cfg)
+  end, config.timeout)
 end
 
 function M.defer(result, ctx, config)
@@ -99,8 +97,11 @@ function M.flush()
   local buffer = api.nvim_get_current_buf()
 
   for _, data in pairs(cached[buffer]) do
-    pending[buffer][data.ctx.client_id] =
-      schedule(data.result, data.ctx, data.config)
+    pending[buffer][data.ctx.client_id] = schedule(
+      data.result,
+      data.ctx,
+      data.config
+    )
   end
 
   cached[buffer] = {}
