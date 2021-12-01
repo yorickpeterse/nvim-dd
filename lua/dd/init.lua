@@ -61,10 +61,6 @@ local function should_cache()
 end
 
 local function schedule(result, ctx, cfg)
-  local version_before_schedule = lsp.util.buf_versions[vim.uri_to_bufnr(
-    result.uri
-  )]
-
   return vim.defer_fn(function()
     -- It's possible that at this point the state has changed such that we
     -- _don't_ want to show diagnostics anymore (e.g. we've entered insert mode
@@ -74,14 +70,6 @@ local function schedule(result, ctx, cfg)
     -- by now. As such we'll just defer the diagnostics again.
     if should_cache() then
       M.defer(result, ctx, cfg)
-      return
-    end
-
-    local bufnr = vim.uri_to_bufnr(result.uri)
-
-    if lsp.util.buf_versions[bufnr] ~= version_before_schedule then
-      -- If the buffer changed since we first scheduled the diagnostics, new
-      -- diagnostics will soon replace the current ones, so we just bail out.
       return
     end
 
