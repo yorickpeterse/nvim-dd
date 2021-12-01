@@ -73,6 +73,15 @@ local function schedule(result, ctx, cfg)
       return
     end
 
+    local bufnr = vim.uri_to_bufnr(result.uri)
+
+    if result.version and lsp.util.buf_versions[bufnr] ~= result.version then
+      -- If the diagnostics are for an older version of the buffer, there's no
+      -- point in showing them, as newly produced diagnostics will replace them
+      -- anyway.
+      return
+    end
+
     original_on_publish(nil, result, ctx, cfg)
   end, config.timeout)
 end
