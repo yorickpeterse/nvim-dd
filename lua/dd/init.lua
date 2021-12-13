@@ -46,7 +46,7 @@ local config = {
 
 -- The various modes that for which we don't want diagnostics to show while we
 -- are in those modes.
-local ignore_modes = { i = true, ic = true, ix = true }
+local ignore_modes = { i = true, ic = true, ix = true, s = true }
 
 local function should_cache()
   -- In insert mode we don't want the diagnostics to show up, even if we wait a
