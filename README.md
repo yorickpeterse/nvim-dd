@@ -28,14 +28,14 @@ every time you use the `vim.diagnostic` API yourself (e.g. in a statusline).
 To illustrate this, here's what it looks like when you edit a Lua file without
 nvim-dd:
 
-![Without nvim-dd](/uploads/e3fa3bce57171b20c655319ffbd13ada/before.webm)
+![Without nvim-dd](https://github.com/yorickpeterse/nvim-dd/assets/86065/8588e17a-26f8-43e7-adc3-83cbd11e8913)
 
 Note how the statusline changes as we're typing, and the new signs/underlines
 that are produced.
 
 Here's what it looks like _with_ nvim-dd:
 
-![With nvim-dd](/uploads/cdac1507febaec3dd6a85dacddbc2bdc/after.webm)
+![With nvim-dd](https://github.com/yorickpeterse/nvim-dd/assets/86065/947d85ec-deee-4162-9fd7-de389b5bb34b)
 
 While the statusline and signs/underlines still change, they change less
 frequently and not while we're in insert mode.
