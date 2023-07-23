@@ -97,11 +97,8 @@ function M.flush()
   local buffer = api.nvim_get_current_buf()
 
   for _, data in pairs(cached[buffer]) do
-    pending[buffer][data.ctx.client_id] = schedule(
-      data.result,
-      data.ctx,
-      data.config
-    )
+    pending[buffer][data.ctx.client_id] =
+      schedule(data.result, data.ctx, data.config)
   end
 
   cached[buffer] = {}
