@@ -60,8 +60,18 @@ local function should_cache()
   return fn.pumvisible() == 1 or ignore_modes[mode]
 end
 
-local function schedule(result, ctx, cfg)
+-- Schedules the flushing of diagnostics.
+--
+-- This function _does not_ capture the data and instead reads it from the
+-- cache. This is deliberate because the data can be rather large, and it seems
+-- Neovim/libuv holds on to the closure for quite long, resulting in an increase
+-- in memory usage as the number of diagnostics processed goes up.
+local function schedule(buffer, client)
   return vim.defer_fn(function()
+    local data = cached[buffer][client]
+
+    cached[buffer][client] = nil
+
     -- It's possible that at this point the state has changed such that we
     -- _don't_ want to show diagnostics anymore (e.g. we've entered insert mode
     -- again).
@@ -69,11 +79,11 @@ local function schedule(result, ctx, cfg)
     -- If new diagnostics were produced, this callback would have been cancelled
     -- by now. As such we'll just defer the diagnostics again.
     if should_cache() then
-      M.defer(result, ctx, cfg)
+      M.defer(data.result, data.ctx, data.cfg)
       return
     end
 
-    original_on_publish(nil, result, ctx, cfg)
+    original_on_publish(nil, data.result, data.ctx, data.cfg)
   end, config.timeout)
 end
 
@@ -83,25 +93,24 @@ function M.defer(result, ctx, config)
 
   if pending[buffer][client] then
     pending[buffer][client]:stop()
+    pending[buffer][client] = nil
   end
 
+  cached[buffer][client] = { result = result, ctx = ctx, config = config }
+
   if should_cache() then
-    cached[buffer][client] = { result = result, ctx = ctx, config = config }
     return
   end
 
-  pending[buffer][client] = schedule(result, ctx, config)
+  pending[buffer][client] = schedule(buffer, client)
 end
 
 function M.flush()
   local buffer = api.nvim_get_current_buf()
 
   for _, data in pairs(cached[buffer]) do
-    pending[buffer][data.ctx.client_id] =
-      schedule(data.result, data.ctx, data.config)
+    pending[buffer][data.ctx.client_id] = schedule(buffer, data.ctx.client_id)
   end
-
-  cached[buffer] = {}
 end
 
 function M.setup(options)
