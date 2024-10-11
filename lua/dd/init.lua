@@ -70,6 +70,10 @@ local function schedule(buffer, client)
   return vim.defer_fn(function()
     local data = cached[buffer][client]
 
+    if not data then
+      return
+    end
+
     cached[buffer][client] = nil
 
     -- It's possible that at this point the state has changed such that we
