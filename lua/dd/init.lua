@@ -68,6 +68,10 @@ end
 -- in memory usage as the number of diagnostics processed goes up.
 local function schedule(buffer, client)
   return vim.defer_fn(function()
+    if not api.nvim_buf_is_valid(buffer) then
+      return
+    end
+
     local data = cached[buffer][client]
 
     if not data then
